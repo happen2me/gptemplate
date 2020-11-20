@@ -1,5 +1,6 @@
 #ifndef MASSSPRINGSYSTEMSIMULATOR_h
 #define MASSSPRINGSYSTEMSIMULATOR_h
+#include <cmath>
 #include "Simulator.h"
 
 // Do Not Change
@@ -8,6 +9,28 @@
 #define MIDPOINT 2
 // Do Not Change
 
+struct MassPoint {
+	MassPoint(Vec3 position, Vec3 velocity, bool isFixed) {
+		this->position = position;
+		this->velocity = velocity;
+		this->isFixed = isFixed;
+		this->intForce = Vec3(0, 0, 0);
+	};
+	Vec3 position;
+	Vec3 velocity;
+	bool isFixed;
+	Vec3 intForce;
+};
+struct Spring {
+	Spring(int mp1, int mp2, float length) {
+		this->mp1 = mp1;
+		this->mp2 = mp2;
+		this->length = length;
+	};
+	int mp1;
+	int mp2;
+	float length;
+};
 
 class MassSpringSystemSimulator:public Simulator{
 public:
@@ -42,12 +65,21 @@ public:
 		m_iIntegrator = integrator;
 	}
 
+	static Vec3 normalize(Vec3 v);
+	void simulateSimpleEuler();
+	void drawSimpleMidpoint();
+	void drawComplexSimulation();
+
 private:
 	// Data Attributes
 	float m_fMass;
 	float m_fStiffness;
 	float m_fDamping;
 	int m_iIntegrator;
+
+	int m_iTestCase;
+	vector<MassPoint> m_points;
+	vector<Spring> m_springs;
 
 	// UI Attributes
 	Vec3 m_externalForce;
