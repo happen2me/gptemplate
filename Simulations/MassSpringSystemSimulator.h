@@ -48,6 +48,8 @@ public:
 	void onClick(int x, int y);
 	void onMouse(int x, int y);
 
+	const char * getIntergratorsStr();
+
 	// Specific Functions
 	void setMass(float mass);
 	void setStiffness(float stiffness);
@@ -59,6 +61,7 @@ public:
 	Vec3 getPositionOfMassPoint(int index);
 	Vec3 getVelocityOfMassPoint(int index);
 	void applyExternalForce(Vec3 force);
+	void applyGravity(bool on);
 	
 	// Do Not Change
 	void setIntegrator(int integrator) {
@@ -66,9 +69,8 @@ public:
 	}
 
 	static Vec3 normalize(Vec3 v);
-	void simulateSimpleEuler();
-	void drawSimpleMidpoint();
-	void drawComplexSimulation();
+	void simulateTwoPoint();
+	void simulateComlexSystem();
 
 private:
 	// Data Attributes
@@ -78,6 +80,7 @@ private:
 	int m_iIntegrator;
 
 	int m_iTestCase;
+	bool m_bApplyGravity;
 	vector<MassPoint> m_points;
 	vector<Spring> m_springs;
 

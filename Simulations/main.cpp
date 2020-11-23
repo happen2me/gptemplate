@@ -20,8 +20,8 @@ using namespace GamePhysics;
 
 //#define ADAPTIVESTEP
 
-#define TEMPLATE_DEMO
-//#define MASS_SPRING_SYSTEM
+//#define TEMPLATE_DEMO
+#define MASS_SPRING_SYSTEM
 //#define RIGID_BODY_SYSTEM
 //#define SPH_SYSTEM
 
@@ -40,7 +40,7 @@ using namespace GamePhysics;
 
 DrawingUtilitiesClass * g_pDUC;
 Simulator * g_pSimulator;
-float 	g_fTimestep = 0.001;
+float 	g_fTimestep = 0.005;
 #ifdef ADAPTIVESTEP
 float   g_fTimeFactor = 1;
 #endif
@@ -49,22 +49,29 @@ int g_iTestCase = 0;
 int g_iPreTestCase = -1;
 bool  g_bSimulateByStep = false;
 bool firstTime = true;
+bool g_bApplyGravity = false;
 // Video recorder
 FFmpeg* g_pFFmpegVideoRecorder = nullptr;
+
+int g_iIntegrationMethod = 0;
 
 
 void initTweakBar(){
 	g_pDUC->g_pTweakBar = TwNewBar("TweakBar");
 	TwDefine(" TweakBar color='0 128 128' alpha=128 ");
 	TwType TW_TYPE_TESTCASE = TwDefineEnumFromString("Test Scene", g_pSimulator->getTestCasesStr());
+	TwType TW_TYPE_INTEGRATOR_METHOD = TwDefineEnumFromString("Inte Method", "Euler,Leapfrog,Midpoint");
 	TwAddVarRW(g_pDUC->g_pTweakBar, "Test Scene", TW_TYPE_TESTCASE, &g_iTestCase, "");
+	TwAddVarRW(g_pDUC->g_pTweakBar, "Integ Method", TW_TYPE_INTEGRATOR_METHOD, &g_iIntegrationMethod, "");
 	// HINT: For buttons you can directly pass the callback function as a lambda expression.
 	TwAddButton(g_pDUC->g_pTweakBar, "Reset Scene", [](void * s){ g_iPreTestCase = -1; }, nullptr, "");
 	TwAddButton(g_pDUC->g_pTweakBar, "Reset Camera", [](void * s){g_pDUC->g_camera.Reset();}, nullptr,"");
+
 	// Run mode, step by step, control by space key
 	TwAddVarRW(g_pDUC->g_pTweakBar, "RunStep", TW_TYPE_BOOLCPP, &g_bSimulateByStep, "");
 	TwAddVarRW(g_pDUC->g_pTweakBar, "Draw Simulation",  TW_TYPE_BOOLCPP, &g_bDraw, "");
 	TwAddVarRW(g_pDUC->g_pTweakBar, "Timestep", TW_TYPE_FLOAT, &g_fTimestep, "step=0.0001 min=0.0001");
+	TwAddVarRW(g_pDUC->g_pTweakBar, "Gravity", TW_TYPE_BOOLCPP, &g_bApplyGravity, "");
 #ifdef ADAPTIVESTEP
 	TwAddVarRW(g_pDUC->g_pTweakBar, "Time Factor", TW_TYPE_FLOAT, &g_fTimeFactor, "step=0.01   min=0.01");
 #endif
@@ -250,8 +257,16 @@ void CALLBACK OnFrameMove( double dTime, float fElapsedTime, void* pUserContext 
 		initTweakBar();
 		g_pSimulator->notifyCaseChanged(g_iTestCase);
 		g_pSimulator->initUI(g_pDUC);
+#ifdef MASS_SPRING_SYSTEM
+		((MassSpringSystemSimulator*)g_pSimulator)->setIntegrator(g_iIntegrationMethod);
+#endif
 		g_iPreTestCase = g_iTestCase;
 	}
+
+#ifdef MASS_SPRING_SYSTEM
+	((MassSpringSystemSimulator*)g_pSimulator)->applyGravity(g_bApplyGravity);
+#endif
+
 	if(!g_bSimulateByStep){
 #ifdef ADAPTIVESTEP
 		g_pSimulator->externalForcesCalculations(fElapsedTime);
@@ -319,9 +334,12 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
     }
 }
 
+
+
 //--------------------------------------------------------------------------------------
 // Initialize everything and go into a render loop
 //--------------------------------------------------------------------------------------
+
 int main(int argc, char* argv[])
 {
 #if defined(DEBUG) | defined(_DEBUG)
@@ -363,6 +381,7 @@ int main(int argc, char* argv[])
 #endif
 #ifdef MASS_SPRING_SYSTEM
 	g_pSimulator= new MassSpringSystemSimulator();
+	//simulateMSS((MassSpringSystemSimulator*)g_pSimulator);
 #endif
 #ifdef RIGID_BODY_SYSTEM
 	//g_pSimulator= new RigidBodySystemSimulator();
@@ -371,7 +390,8 @@ int main(int argc, char* argv[])
 	//g_pSimulator= new SPHSystemSimulator();
 #endif
 	g_pSimulator->reset();
-
+	
+	
     // Init DXUT and create device
 	DXUTInit( true, true, NULL ); // Parse the command line, show msgboxes on error, no extra command line params
 	//DXUTSetIsInGammaCorrectMode( false ); // true by default (SRGB backbuffer), disable to force a RGB backbuffer
