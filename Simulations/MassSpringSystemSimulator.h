@@ -69,6 +69,7 @@ public:
 	}
 
 	static Vec3 normalize(Vec3 v);
+	void basicTest(int integrator);
 	void simulateTwoPoint();
 	void simulateComlexSystem();
 

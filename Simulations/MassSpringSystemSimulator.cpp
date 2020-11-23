@@ -48,6 +48,7 @@ void MassSpringSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateCont
     int mp_num = getNumberOfMassPoints();
     int spring_num = getNumberOfSprings();
     for (int i = 0; i < mp_num; i++) {
+        DUC->setUpLighting(Vec3(), 0.4 * Vec3(1, 1, 1), 100, 0.6 * Vec3(0.3, 0.4, 0.5));
         DUC->drawSphere(getPositionOfMassPoint(i), Vec3(sphereSize, sphereSize, sphereSize));
     }
     
@@ -99,6 +100,7 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
             
             if (p.position.y < 0) {
                 p.position.y = 0;
+                p.velocity.y *= -1;
             }
 
         }
@@ -186,6 +188,7 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
             p.position += midVelocoties[i] * timeStep;
             if (p.position.y < 0) {
                 p.position.y = 0;
+                p.velocity.y *= -1;
             }
             Vec3 extAcc = m_externalForce / (m_fMass * numMassPoints);
             Vec3 dampAcc = -m_fDamping * midVelocoties[i] / m_fMass;
@@ -269,6 +272,31 @@ Vec3 MassSpringSystemSimulator::normalize(Vec3 v)
 {
     float length = norm(v);
     return v/length;
+}
+// The basic test is not included in the UI
+void MassSpringSystemSimulator::basicTest(int integrator)
+{
+    simulateTwoPoint();    
+    switch (integrator)
+    {
+    case LEAPFROG:
+        //pass
+    case EULER:
+        m_iIntegrator = EULER;
+        break;
+    case MIDPOINT:
+        m_iIntegrator = MIDPOINT;
+        break;
+    default:
+        m_iIntegrator = MIDPOINT;
+        break;
+    }
+    simulateTimestep(0.1);
+    for each (MassPoint& p in m_points)
+    {
+        cout << "position: " << p.position << endl;
+    }
+    return;
 }
 
 void MassSpringSystemSimulator::simulateTwoPoint()
