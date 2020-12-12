@@ -39,14 +39,7 @@ void RigidBodySystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateConte
 		DUC->setUpLighting(Vec3(0, 0, 0), 0.4 * Vec3(1, 1, 1), 2000.0, Vec3(0.5, 0.5, 0.5));
 		// TODO: convert to world transformation
 		// BodyA.Obj2WorldMatrix = BodyA.scaleMat * BodyA.rotMat * BodyA.translatMat;
-		RigidBody& body = rigidBoides[i];
-		Vec3& size = body.size;
-		Vec3& position = body.position;
-		Mat4 scaleMat = Mat4(); // CHECK: scaleMat[3][3] = 1, is this right?
-		scaleMat.initScaling(size.x, size.y, size.z);
-		Mat4 translateMat = Mat4();
-		translateMat.initTranslation(position.x, position.y, position.z);
-		Mat4 obj2WorldMatrix = scaleMat * body.r.getRotMat() * translateMat;
+		Mat4 obj2WorldMatrix = composeToWorldMat(rigidBoides[i]);
 		DUC->drawRigidBody(obj2WorldMatrix);
 	}
 }
@@ -146,6 +139,18 @@ void RigidBodySystemSimulator::setOrientationOf(int i, Quat orientation)
 void RigidBodySystemSimulator::setVelocityOf(int i, Vec3 velocity)
 {
 	rigidBoides[i].v = velocity;
+}
+
+Mat4 RigidBodySystemSimulator::composeToWorldMat(RigidBody& rigidBody)
+{
+	Vec3& size = rigidBody.size;
+	Vec3& position = rigidBody.position;
+	Mat4 scaleMat = Mat4();
+	scaleMat.initScaling(size.x, size.y, size.z);
+	Mat4 translateMat = Mat4();
+	translateMat.initTranslation(position.x, position.y, position.z);
+	Mat4 obj2WorldMatrix = scaleMat * rigidBody.r.getRotMat() * translateMat;
+	return obj2WorldMatrix;
 }
 
 

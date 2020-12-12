@@ -74,7 +74,7 @@ public:
 
 public: 
 	// Helper functions
-	//const static Mat4 computeInitInertiaTensor(const Vec3& size, const int mass);
+	static Mat4 composeToWorldMat(RigidBody& rigidBody);
 
 private:
 	// Attributes
