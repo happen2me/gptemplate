@@ -1,6 +1,8 @@
 #include "RigidBodySystemSimulator.h"
 #include "SimpleMath.h"
 
+static int DEBUG = 0;
+
 RigidBodySystemSimulator::RigidBodySystemSimulator()
 {
 	m_externalForce = Vec3();
@@ -34,12 +36,18 @@ void RigidBodySystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateConte
 {
 	int num_rigidbody = getNumberOfRigidBodies();
 	for (int i = 0; i < num_rigidbody; i++) {
-		DUC->setUpLighting(Vec3(), 0.4 * Vec3(1, 1, 1), 100, 0.6 * Vec3(0.3, 0.4, 0.5));
+		DUC->setUpLighting(Vec3(0, 0, 0), 0.4 * Vec3(1, 1, 1), 2000.0, Vec3(0.5, 0.5, 0.5));
 		// TODO: convert to world transformation
-		// Multipling m_inverseInertiaTensorL by m_worldTransform is the right way; 
-		// only the rotation part of m_worldTransform is needed, so you can multiply 
-		// m_inverseInertiaTensorL by the 3x3-sub-matrix of m_worldTransform.
-		DUC->drawRigidBody(rigidBoides[i].r.getRotMat());
+		// BodyA.Obj2WorldMatrix = BodyA.scaleMat * BodyA.rotMat * BodyA.translatMat;
+		RigidBody& body = rigidBoides[i];
+		Vec3& size = body.size;
+		Vec3& position = body.position;
+		Mat4 scaleMat = Mat4(); // CHECK: scaleMat[3][3] = 1, is this right?
+		scaleMat.initScaling(size.x, size.y, size.z);
+		Mat4 translateMat = Mat4();
+		translateMat.initTranslation(position.x, position.y, position.z);
+		Mat4 obj2WorldMatrix = scaleMat * body.r.getRotMat() * translateMat;
+		DUC->drawRigidBody(obj2WorldMatrix);
 	}
 }
 
@@ -57,12 +65,11 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 	
 	for (int i = 0; i < num; i++) {
 		RigidBody& body = rigidBoides[i];
-		cout << "init inertia tensor" << body.I_inv_init << endl;
-		cout << "init orientation in quat£º " << body.r << endl;
+		
 
 		Vec3 extForce = body.force;
 		Vec3 torque = cross(body.forceLoc, body.force);
-		cout << "torque£º " << torque << endl;
+		
 		// Update linear position		
 		body.position += timeStep * body.v;
 		// Update linear velocity
@@ -71,20 +78,24 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 		// Update rotation: r <- r + h/2 * (0, w)^T * r
 		Quat expandedAngularVelocity(0, body.w.x, body.w.y, body.w.z);
 		body.r += (expandedAngularVelocity * body.r) * (timeStep / 2);
-
-		cout << "body.r1" << body.r << endl;
 		// Update angular momentum: L <- L + h*q
 		body.L += timeStep * torque;
-		cout << "momentum" << body.L << endl;
 		// Update inversed inertia tensor
 		Mat4 rotation = body.r.getRotMat();
 		Mat4 rotation_T = Mat4(rotation);
 		rotation_T.transpose();
 		body.I_inv = rotation * body.I_inv_init * rotation_T;
-		cout << "intertial1 inv" << body.I_inv << endl;
 		// Update angular velocity
-		body.w = body.I_inv * body.L;
-		cout << "angular velocity" << body.w << endl;
+		body.w = body.I_inv * body.L;		
+
+		if (DEBUG) {
+			cout << "init inertia tensor" << body.I_inv_init << endl;
+			cout << "init orientation in quat£º " << body.r << endl;
+			cout << "torque£º " << torque << endl;
+			cout << "body.r1" << body.r << endl;
+			cout << "intertial1 inv" << body.I_inv << endl;
+			cout << "angular velocity" << body.w << endl;
+		}
 	}
 }
 
