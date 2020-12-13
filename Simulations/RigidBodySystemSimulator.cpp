@@ -1,5 +1,6 @@
 #include "RigidBodySystemSimulator.h"
 #include "SimpleMath.h"
+#include "collisionDetect.h"
 
 static int DEBUG = 0;
 
@@ -71,7 +72,9 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 		// Update rotation: r <- r + h/2 * (0, w)^T * r
 		Quat expandedAngularVelocity(0, body.w.x, body.w.y, body.w.z);
 		body.r += (expandedAngularVelocity * body.r) * (timeStep / 2);
-		body.r /= body.r.norm(); // re-normalize orientation quaternion
+		if (body.r.norm() != 0) {
+			body.r /= body.r.norm(); // re-normalize orientation quaternion
+		}
 		// Update angular momentum: L <- L + h*q
 		body.L += timeStep * torque;
 		// Update inversed inertia tensor
@@ -80,7 +83,33 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 		rotation_T.transpose();
 		body.I_inv = rotation * body.I_inv_init * rotation_T;
 		// Update angular velocity
-		body.w = body.I_inv * body.L;		
+		body.w = body.I_inv * body.L;
+
+		// Collision detection
+		for (int i = 0; i < num; i++) {
+			for (int j = i + 1; j < num; j++) {
+				RigidBody& A = rigidBoides[i];
+				RigidBody& B = rigidBoides[j];
+				Mat4 worldA = composeToWorldMat(A);
+				Mat4 worldB = composeToWorldMat(B);
+				CollisionInfo collision = checkCollisionSAT(worldA, worldB);
+				// Handle collision event
+				if (collision.isValid) {
+					bool isSeparating = false;
+					float impulse = computeImpulse(A, B, collision.collisionPointWorld, collision.normalWorld, isSeparating);
+					if (isSeparating) {
+						continue;
+					}
+					cout << "Collision detected between " << i << " and " << j << endl;
+					Vec3 relColA = collision.collisionPointWorld - A.position;
+					Vec3 relColB = collision.collisionPointWorld - B.position;
+					A.v += impulse * collision.normalWorld / A.mass;
+					B.v -= impulse * collision.normalWorld / B.mass;
+					A.L += cross(relColA, impulse * collision.normalWorld);
+					B.L -= cross(relColB, impulse * collision.normalWorld);
+				}
+			}
+		}
 
 		if (DEBUG) {
 			cout << "init inertia tensor" << body.I_inv_init << endl;
@@ -91,6 +120,7 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 			cout << "angular velocity" << body.w << endl;
 		}
 	}
+	cout << "point0.position: " << rigidBoides[0].position << endl;
 }
 
 void RigidBodySystemSimulator::onClick(int x, int y)
@@ -152,6 +182,42 @@ Mat4 RigidBodySystemSimulator::composeToWorldMat(RigidBody& rigidBody)
 	translateMat.initTranslation(position.x, position.y, position.z);
 	Mat4 obj2WorldMatrix = scaleMat * rigidBody.r.getRotMat() * translateMat;
 	return obj2WorldMatrix;
+}
+
+Vec3 RigidBodySystemSimulator::computeWorldVelocity(RigidBody& rigidBody, Vec3& worldPosition)
+{
+	Vec3 relativePositionToRigidBody = worldPosition - rigidBody.position;
+	Vec3 velocityP = rigidBody.v + cross(rigidBody.w, relativePositionToRigidBody);
+	return velocityP;
+}
+
+float RigidBodySystemSimulator::computeImpulse(RigidBody& A, RigidBody& B, Vec3& collisionPointWorld, Vec3& collisionNorm, bool& isSeparating)
+{
+	// Compute velocities at collision point
+	Vec3 worldVelocityA = computeWorldVelocity(A, collisionPointWorld);
+	Vec3 worldVelocityB = computeWorldVelocity(B, collisionPointWorld);
+	Vec3 relativeCollisionPointA = collisionPointWorld - A.position;
+	Vec3 relativeCollisionPointB = collisionPointWorld - B.position;
+	Vec3 relativeVelocity = worldVelocityA - worldVelocityB;
+	Vec3 velocityDotNorm = relativeVelocity * collisionPointWorld;
+	float projectedVal = velocityDotNorm[0] + velocityDotNorm[1] + velocityDotNorm[2];
+	if (projectedVal > 0) { // two bodies are seperating, do nothing
+		isSeparating = true;
+		return 0.0f;
+	}
+	float bounciness = 0; // 0: hard; 1: bouncy
+	float molecular = -(1 + bounciness) * projectedVal;
+	Vec3 testA = Vec3(1, 2, 3);
+	Vec3 testB = Vec3(4, 5, 6);
+	Vec3 testMult = testA * testB;
+	assert((testMult[0] - 4) < 0.00001);
+	assert((testMult[1] - 10) < 0.00001);
+	assert((testMult[2] - 18) < 0.00001);
+	Vec3 vecCalcInDenominator = (cross(A.I_inv * cross(relativeCollisionPointA, collisionNorm), relativeCollisionPointA) + 
+		cross(B.I_inv * cross(relativeCollisionPointB, collisionNorm), relativeCollisionPointB)) * collisionNorm;
+	float vecCalcInDenominatorVal = vecCalcInDenominator[0] + vecCalcInDenominator[1] + vecCalcInDenominator[2];
+	float denominator = 1 / A.mass + 1 / B.mass + vecCalcInDenominatorVal;
+	return molecular / denominator;
 }
 
 

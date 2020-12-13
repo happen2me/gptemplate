@@ -75,7 +75,8 @@ public:
 public: 
 	// Helper functions
 	static Mat4 composeToWorldMat(RigidBody& rigidBody);
-
+	static Vec3 computeWorldVelocity(RigidBody& A, Vec3& worldPosition);
+	static float computeImpulse(RigidBody& A, RigidBody& B, Vec3& collisionPointWorld, Vec3& collisionNorm, bool& isSeparating);
 private:
 	// Attributes
 	// add your RigidBodySystem data members, for e.g.,
