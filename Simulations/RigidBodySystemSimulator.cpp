@@ -71,6 +71,7 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 		// Update rotation: r <- r + h/2 * (0, w)^T * r
 		Quat expandedAngularVelocity(0, body.w.x, body.w.y, body.w.z);
 		body.r += (expandedAngularVelocity * body.r) * (timeStep / 2);
+		body.r /= body.r.norm(); // re-normalize orientation quaternion
 		// Update angular momentum: L <- L + h*q
 		body.L += timeStep * torque;
 		// Update inversed inertia tensor
