@@ -72,6 +72,12 @@ public:
 	void setOrientationOf(int i,Quat orientation);
 	void setVelocityOf(int i, Vec3 velocity);
 
+	//Simulations
+	void simulateDemo1(); // A simple one-step test
+	void simulateDemo2(); // Simple single body simulation
+	void simulateDemo3(); // Two-rigid-body collision scene
+	void simulateDemo4(); // Complex simulation
+
 public: 
 	// Helper functions
 	static Mat4 composeToWorldMat(RigidBody& rigidBody);
@@ -82,8 +88,8 @@ private:
 	// add your RigidBodySystem data members, for e.g.,
 	// RigidBodySystem * m_pRigidBodySystem; 
 	Vec3 m_externalForce;
-
 	vector<RigidBody> rigidBoides;
+	bool m_enableGravity;
 
 	// UI Attributes
 	Point2D m_mouse;
