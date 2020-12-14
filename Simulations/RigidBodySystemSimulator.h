@@ -30,12 +30,16 @@ struct RigidBody {
 	const Mat4 I_inv_init; // Initial value of inertia tensor
 	Mat4 I_inv; // Inverse of inertia tensor, because this is more useful
 	Vec3 L; // Angular momentum
-	RigidBody(Vec3 position, Vec3 size, int mass):
+	bool isFixed;
+	RigidBody(Vec3 position, Vec3 size, int mass, bool isFixed = false):
 		I_inv_init(computeInitInertiaTensor(size, mass).inverse())
 	{
 		this->position = position;
 		this->size = size;
 		this->mass = mass;
+		this->isFixed = isFixed;
+		if (isFixed)
+			this->mass = INT32_MAX;
 		force = Vec3();
 		forceLoc = Vec3();
 		v = Vec3();
@@ -68,7 +72,7 @@ public:
 	Vec3 getLinearVelocityOfRigidBody(int i);
 	Vec3 getAngularVelocityOfRigidBody(int i);
 	void applyForceOnBody(int i, Vec3 loc, Vec3 force);
-	void addRigidBody(Vec3 position, Vec3 size, int mass);
+	void addRigidBody(Vec3 position, Vec3 size, int mass, bool isFixed);
 	void setOrientationOf(int i,Quat orientation);
 	void setVelocityOf(int i, Vec3 velocity);
 

@@ -42,6 +42,11 @@ void RigidBodySystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateConte
 		// BodyA.Obj2WorldMatrix = BodyA.scaleMat * BodyA.rotMat * BodyA.translatMat;
 		Mat4 obj2WorldMatrix = composeToWorldMat(rigidBoides[i]);
 		DUC->drawRigidBody(obj2WorldMatrix);
+		if (m_enableGravity)
+		{
+			DUC->setUpLighting(Vec3(), 0.4*Vec3(1, 1, 1), 100, 0.6*Vec3(0.97, 0.86, 1));
+			DUC->drawSphere(Vec3(0.f, 0.f, 0.f), Vec3(0.01f, 0.01f, 0.01f));
+		}
 	}
 }
 
@@ -79,11 +84,15 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 	for (int i = 0; i < num; i++) {
 		RigidBody& body = rigidBoides[i];
 		
+		if (body.isFixed)
+			continue;
 
 		Vec3 extForce = body.force;
+		if (m_enableGravity)
+			extForce += -1 * body.position * body.mass;
 		Vec3 torque = cross(body.forceLoc-body.position, body.force);
 		
-		// Update linear position		
+		// Update linear position	
 		body.position += timeStep * body.v;
 		// Update linear velocity
 		Vec3 linearAcc = extForce / body.mass;
@@ -179,9 +188,9 @@ void RigidBodySystemSimulator::applyForceOnBody(int i, Vec3 loc, Vec3 force)
 	rigidBoides[i].forceLoc = loc;
 }
 
-void RigidBodySystemSimulator::addRigidBody(Vec3 position, Vec3 size, int mass)
+void RigidBodySystemSimulator::addRigidBody(Vec3 position, Vec3 size, int mass, bool isFixed = false)
 {
-	rigidBoides.push_back(RigidBody(position, size, mass));
+	rigidBoides.push_back(RigidBody(position, size, mass, isFixed));
 }
 
 void RigidBodySystemSimulator::setOrientationOf(int i, Quat orientation)
@@ -197,6 +206,7 @@ void RigidBodySystemSimulator::setVelocityOf(int i, Vec3 velocity)
 void RigidBodySystemSimulator::simulateDemo1()
 {
 	rigidBoides.clear();
+	this->m_enableGravity = false;
 	addRigidBody(Vec3(0.0f, 0.0f, 0.0f), Vec3(1.0f, 0.6f, 0.5f), 2.0f);
 	setOrientationOf(0, Quat(Vec3(0.0f, 0.0f, 1.0f), (float)(M_PI) * 0.5f));
 	applyForceOnBody(0, Vec3(0.3f, 0.5f, 0.25f), Vec3(1.0f, 1.0f, 0.0f));
@@ -205,6 +215,7 @@ void RigidBodySystemSimulator::simulateDemo1()
 void RigidBodySystemSimulator::simulateDemo2()
 {
 	rigidBoides.clear();
+	this->m_enableGravity = false;
 	addRigidBody(Vec3(0.0f, 0.0f, 0.0f), Vec3(1.0f, 0.6f, 0.5f), 2.0f);
 	setOrientationOf(0, Quat(Vec3(0.0f, 0.0f, 1.0f), (float)(M_PI) * 0.5f));
 	applyForceOnBody(0, Vec3(0.3f, 0.5f, 0.25f), Vec3(1.0f, 1.0f, 0.0f));
@@ -213,9 +224,10 @@ void RigidBodySystemSimulator::simulateDemo2()
 void RigidBodySystemSimulator::simulateDemo3()
 {
 	rigidBoides.clear();
+	this->m_enableGravity = false;
 	addRigidBody(Vec3(-0.1f, -0.2f, 0.1f), Vec3(0.4f, 0.2f, 0.2f), 100.0f);
 
-	addRigidBody(Vec3(0.0f, 0.2f, 0.0f), Vec3(0.4f, 0.2f, 0.2f), 100.0);
+	addRigidBody(Vec3(0.0f, 0.2f, 0.0f), Vec3(0.4f, 0.2f, 0.2f), 80.0);
 	setOrientationOf(1, Quat(Vec3(0.0f, 0.0f, 1.0f), (float)(M_PI) * 0.25f));
 	setVelocityOf(1, Vec3(0.0f, -0.1f, 0.05f));
 	// applyForceOnBody(0, Vec3(0.0, 0.0f, 0.0), Vec3(0, 0, 200));
@@ -223,6 +235,16 @@ void RigidBodySystemSimulator::simulateDemo3()
 
 void RigidBodySystemSimulator::simulateDemo4()
 {
+	rigidBoides.clear();
+	this->m_enableGravity = true;
+
+	addRigidBody(Vec3(0.0f, -1.f, 0.0f), Vec3(1.f, 0.3f, 1.f), 13.0f);
+	addRigidBody(Vec3(-0.6f, 0.2f, 0.0f), Vec3(0.1f, 0.2f, 0.2f), 12.0);
+	addRigidBody(Vec3(0.5f, 0.2f, -0.5f), Vec3(0.1f, 0.2f, 0.2f), 14.0);
+	addRigidBody(Vec3(-0.3f, 0.2f, 0.2f), Vec3(0.1f, 0.2f, 0.2f), 16.0);
+	addRigidBody(Vec3(0.2f, 0.2f, -0.3f), Vec3(0.1f, 0.2f, 0.2f), 18.0);
+
+	setOrientationOf(1, Quat(Vec3(0.0f, 0.0f, 1.0f), (float)(M_PI) * 0.25f));
 }
 
 Mat4 RigidBodySystemSimulator::composeToWorldMat(RigidBody& rigidBody)
