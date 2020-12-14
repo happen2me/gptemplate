@@ -103,32 +103,9 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 		body.I_inv = rotation * body.I_inv_init * rotation_T;
 		// Update angular velocity
 		body.w = body.I_inv * body.L;
-
-		// Collision detection
-		for (int i = 0; i < num; i++) {
-			for (int j = i + 1; j < num; j++) {
-				RigidBody& A = rigidBoides[i];
-				RigidBody& B = rigidBoides[j];
-				Mat4 worldA = composeToWorldMat(A);
-				Mat4 worldB = composeToWorldMat(B);
-				CollisionInfo collision = checkCollisionSAT(worldA, worldB);
-				// Handle collision event
-				if (collision.isValid) {
-					bool isSeparating = false;
-					float impulse = computeImpulse(A, B, collision.collisionPointWorld, collision.normalWorld, isSeparating);
-					if (isSeparating) {
-						continue;
-					}
-					// cout << "Collision detected between " << i << " and " << j << endl;
-					Vec3 relColA = collision.collisionPointWorld - A.position;
-					Vec3 relColB = collision.collisionPointWorld - B.position;
-					A.v += impulse * collision.normalWorld / A.mass;
-					B.v -= impulse * collision.normalWorld / B.mass;
-					A.L += cross(relColA, impulse * collision.normalWorld);
-					B.L -= cross(relColB, impulse * collision.normalWorld);
-				}
-			}
-		}
+		// Clear force
+		body.force = Vec3();
+		body.forceLoc = Vec3();
 
 		if (DEBUG) {
 			cout << "init inertia tensor" << body.I_inv_init << endl;
@@ -137,6 +114,32 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 			cout << "body.r1" << body.r << endl;
 			cout << "intertial1 inv" << body.I_inv << endl;
 			cout << "angular velocity" << body.w << endl;
+		}
+	}
+
+	// Collision detection
+	for (int i = 0; i < num; i++) {
+		for (int j = i + 1; j < num; j++) {
+			RigidBody& A = rigidBoides[i];
+			RigidBody& B = rigidBoides[j];
+			Mat4 worldA = composeToWorldMat(A);
+			Mat4 worldB = composeToWorldMat(B);
+			CollisionInfo collision = checkCollisionSAT(worldA, worldB);
+			// Handle collision event
+			if (collision.isValid) {
+				bool isSeparating = false;
+				float impulse = computeImpulse(A, B, collision.collisionPointWorld, collision.normalWorld, isSeparating);
+				if (isSeparating) {
+					continue;
+				}
+				// cout << "Collision detected between " << i << " and " << j << endl;
+				Vec3 relColA = collision.collisionPointWorld - A.position;
+				Vec3 relColB = collision.collisionPointWorld - B.position;
+				A.v += impulse * collision.normalWorld / A.mass;
+				B.v -= impulse * collision.normalWorld / B.mass;
+				A.L += cross(relColA, impulse * collision.normalWorld);
+				B.L -= cross(relColB, impulse * collision.normalWorld);
+			}
 		}
 	}
 	// cout << "point0.position: " << rigidBoides[0].position << endl;
