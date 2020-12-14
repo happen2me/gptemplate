@@ -81,7 +81,7 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 		
 
 		Vec3 extForce = body.force;
-		Vec3 torque = cross(body.forceLoc, body.force);
+		Vec3 torque = cross(body.forceLoc-body.position, body.force);
 		
 		// Update linear position		
 		body.position += timeStep * body.v;
