@@ -3,16 +3,26 @@
 
 #include "Simulator.h"
 #include "vectorbase.h"
+#include "util/FFmpeg.h"
 
 //impement your own grid class for saving grid data
 class Grid {
 public:
 	// Construtors
 	Grid();
+	void init(int m, int n);
 
-
+	int getM();
+	int getN();
+	std::vector<std::vector<Real>> getGrid();
+	Real read(int x, int y);
+	void write(int x, int y, Real val);
+	
 private:
 	// Attributes
+	std::vector<std::vector<Real>> grid;
+	int m;
+	int n;
 };
 
 
@@ -34,7 +44,7 @@ public:
 	void onMouse(int x, int y);
 	// Specific Functions
 	void drawObjects();
-	Grid* diffuseTemperatureExplicit();
+	Grid* diffuseTemperatureExplicit(float timeStep);
 	void diffuseTemperatureImplicit();
 
 private:
@@ -46,6 +56,7 @@ private:
 	Point2D m_trackmouse;
 	Point2D m_oldtrackmouse;
 	Grid *T; //save results of every time step
+	Real alpha;
 };
 
 #endif

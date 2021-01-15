@@ -2,7 +2,47 @@
 #include "pcgsolver.h"
 using namespace std;
 
-Grid::Grid() {
+Grid::Grid()
+{
+	this->m = 0;
+	this->n = 0;
+}
+
+void Grid::init(int m, int n)
+{
+	this->m = m;
+	this->n = n;
+	this->grid = std::vector<std::vector<Real>>(m, vector<Real>(n));
+	for (int i = 0; i < m; i++) {
+		for (int j = 0; j < n; j++) {
+			grid[i][j] = 0;
+		}
+	}
+}
+
+int Grid::getM()
+{
+	return this->m;
+}
+
+int Grid::getN()
+{
+	return this->n;
+}
+
+std::vector<std::vector<Real>> Grid::getGrid()
+{
+	return this->grid;
+}
+
+Real Grid::read(int x, int y)
+{
+	return grid[x][y];
+}
+
+void Grid::write(int x, int y, Real val)
+{
+	grid[x][y] = val;
 }
 
 
@@ -54,10 +94,27 @@ void DiffusionSimulator::notifyCaseChanged(int testCase)
 	}
 }
 
-Grid* DiffusionSimulator::diffuseTemperatureExplicit() {//add your own parameters
+Grid* DiffusionSimulator::diffuseTemperatureExplicit(float timeStep) {//add your own parameters
 	Grid* newT = new Grid();
 	// to be implemented
 	//make sure that the temperature in boundary cells stays zero
+	int m = T->getM();
+	int n = T->getN();
+	newT->init(m, n);
+	for (int i = 1; i < m-1; i++){ // to avoid boundary values
+		for (int j = 1; j < n-1; j++){
+			Real t = T->read(i, j);
+			Real t_xl = T->read(i, j - 1); // left
+			Real t_xr = T->read(i, j + 1); // right
+			Real t_yl = T->read(i - 1, j); // up
+			Real t_yr = T->read(i + 1, j); // down
+			// assume distance to be one here (need further check)
+			Real x_partial = (t_xr - 2 * t + t_xl) / (1 * 1);
+			Real y_partial = (t_yr - 2 * t + t_yl) / (1 * 1);
+			Real t_new = t + timeStep * alpha * (x_partial + y_partial);
+			newT->write(i, j, t_new);
+		}
+	}
 	return newT;
 }
 
@@ -124,7 +181,7 @@ void DiffusionSimulator::simulateTimestep(float timeStep)
 	switch (m_iTestCase)
 	{
 	case 0:
-		T = diffuseTemperatureExplicit();
+		T = diffuseTemperatureExplicit(timeStep);
 		break;
 	case 1:
 		diffuseTemperatureImplicit();
@@ -136,6 +193,15 @@ void DiffusionSimulator::drawObjects()
 {
 	// to be implemented
 	//visualization
+	int m = T->getM();
+	int n = T->getN();
+	for (int i = 0; i < m; i++) {
+		for (int j = 0; j < n; j++) {
+			Real t = T->read(i, j);
+			DUC->setUpLighting(Vec3(), Vec3(t, 0, -t), 50., Vec3(t, 0, -t));
+			DUC->drawSphere(Vec3(i, j, 0), Vec3(1, 1, 1));
+		}
+	}
 }
 
 
