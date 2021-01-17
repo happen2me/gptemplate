@@ -21,6 +21,18 @@ void Grid::init(int m, int n)
 	}
 }
 
+void Grid::fillRand()
+{
+	for (int i = 1; i < m-1; i++)
+	{
+		for (int j = 1; j < n-1; j++)
+		{
+			// fill with number [0, 0.999]
+			grid[i][j] = rand() % 1000 / 1000.0;
+		}
+	}
+}
+
 int Grid::getM()
 {
 	return m;
@@ -56,6 +68,7 @@ DiffusionSimulator::DiffusionSimulator()
 	// to be implemented
 	T = new Grid();
 	T->init(16, 16);
+	T->fillRand();
 	alpha = 1;
 }
 
@@ -176,6 +189,11 @@ void DiffusionSimulator::diffuseTemperatureImplicit() {//add your own parameters
 	fillT();//copy x to T
 }
 
+void DiffusionSimulator::onGridSizeChange(int m, int n)
+{
+	// TODO: implement this
+}
+
 
 
 void DiffusionSimulator::simulateTimestep(float timeStep)
@@ -202,7 +220,7 @@ void DiffusionSimulator::drawObjects()
 	for (int i = 0; i < m; i++) {
 		for (int j = 0; j < n; j++) {
 			Real t = T->read(i, j);
-			DUC->setUpLighting(Vec3(), Vec3(t, 0, -t), 50., Vec3(t, 0, -t));
+			DUC->setUpLighting(Vec3(0, 0, 0), 0.4 * Vec3(1, 1, 1), 100., Vec3(t, 0.5, t));
 			DUC->drawSphere(Vec3(i, j, 0), Vec3(1, 1, 1));
 		}
 	}

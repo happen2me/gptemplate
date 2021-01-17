@@ -11,6 +11,7 @@ public:
 	// Construtors
 	Grid();
 	void init(int m, int n);
+	void fillRand();
 
 	int getM();
 	int getN();
@@ -46,6 +47,7 @@ public:
 	void drawObjects();
 	Grid* diffuseTemperatureExplicit(float timeStep);
 	void diffuseTemperatureImplicit();
+	void onGridSizeChange(int m, int n);
 
 private:
 	// Attributes
