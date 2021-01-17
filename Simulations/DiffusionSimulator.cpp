@@ -1,5 +1,4 @@
 #include "DiffusionSimulator.h"
-#include "pcgsolver.h"
 using namespace std;
 
 Grid::Grid():
@@ -135,11 +134,18 @@ Grid* DiffusionSimulator::diffuseTemperatureExplicit(float timeStep) {//add your
 	return newT;
 }
 
-void setupB(std::vector<Real>& b) {//add your own parameters
+void DiffusionSimulator::setupB(std::vector<Real>& b) {//add your own parameters
 	// to be implemented
 	//set vector B[sizeX*sizeY]
-	for (int i = 0; i < 25; i++) {
-		b.at(i) = 0;
+	int m = T->getM();
+	int n = T->getN();
+
+	for (int i = 0; i < m; i++)
+	{
+		for (int j = 0; j < n; j++)
+		{
+			b.at(i * n + j) = T->read(m, n);
+		}
 	}
 }
 
@@ -149,26 +155,47 @@ void fillT() {//add your own parameters
 	//make sure that the temperature in boundary cells stays zero
 }
 
-void setupA(SparseMatrix<Real>& A, double factor) {//add your own parameters
+void DiffusionSimulator::setupA(SparseMatrix<Real>& A, double factor) {//add your own parameters
 	// to be implemented
 	//setup Matrix A[sizeX*sizeY*sizeZ, sizeX*sizeY*sizeZ]
 	// set with:  A.set_element( index1, index2 , value );
 	// if needed, read with: A(index1, index2);
 	// avoid zero rows in A -> set the diagonal value for boundary cells to 1.0
-	for (int i = 0; i < 25; i++) {
-			A.set_element(i, i, 1); // set diagonal
-	}
+	int m = T->getM();
+	int n = T->getN();
+
+
+
+	//for (int i = 0; i < m; i++)
+	//{
+	//	for (int j = 0; j < n; j++) 
+	//	{
+	//		A.set_element(i, j, 0);
+	//		if (i == j)
+	//		{
+
+	//		}
+	//		else if (i == j-1 || i == j+1)
+	//		{
+
+	//		}
+	//	}
+	//}
+	//for (int i = 0; i < 25; i++) {
+	//		A.set_element(i, i, 1); // set diagonal
+	//}
+
 }
 
 
-void DiffusionSimulator::diffuseTemperatureImplicit() {//add your own parameters
+void DiffusionSimulator::diffuseTemperatureImplicit(float timeStep) {//add your own parameters
 	// solve A T = b
 	// to be implemented
 	const int N = 25;//N = sizeX*sizeY*sizeZ
 	SparseMatrix<Real> *A = new SparseMatrix<Real> (N);
 	std::vector<Real> *b = new std::vector<Real>(N);
 
-	setupA(*A, 0.1);
+	setupA(*A, timeStep*alpha);
 	setupB(*b);
 
 	// perform solve
@@ -206,7 +233,7 @@ void DiffusionSimulator::simulateTimestep(float timeStep)
 		T = diffuseTemperatureExplicit(timeStep);
 		break;
 	case 1:
-		diffuseTemperatureImplicit();
+		diffuseTemperatureImplicit(timeStep);
 		break;
 	}
 }

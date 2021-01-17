@@ -4,6 +4,7 @@
 #include "Simulator.h"
 #include "vectorbase.h"
 #include "util/FFmpeg.h"
+#include "pcgsolver.h"
 
 //impement your own grid class for saving grid data
 class Grid {
@@ -46,7 +47,7 @@ public:
 	// Specific Functions
 	void drawObjects();
 	Grid* diffuseTemperatureExplicit(float timeStep);
-	void diffuseTemperatureImplicit();
+	void diffuseTemperatureImplicit(float timeStep);
 	void onGridSizeChange(int m, int n);
 
 private:
@@ -59,6 +60,9 @@ private:
 	Point2D m_oldtrackmouse;
 	Grid *T; //save results of every time step
 	Real alpha;
+	// methods
+	void setupB(std::vector<Real>& b);
+	void setupA(SparseMatrix<Real>& A, double factor);
 };
 
 #endif
