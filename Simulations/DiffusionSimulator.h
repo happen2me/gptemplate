@@ -17,7 +17,7 @@ public:
 	std::vector<std::vector<Real>> getGrid();
 	Real read(int x, int y);
 	void write(int x, int y, Real val);
-	
+
 private:
 	// Attributes
 	std::vector<std::vector<Real>> grid;

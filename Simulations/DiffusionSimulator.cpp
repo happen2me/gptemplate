@@ -2,10 +2,11 @@
 #include "pcgsolver.h"
 using namespace std;
 
-Grid::Grid()
+Grid::Grid():
+	m(0),
+	n(0)
 {
-	this->m = 0;
-	this->n = 0;
+	grid = std::vector<std::vector<Real>>();
 }
 
 void Grid::init(int m, int n)
@@ -22,17 +23,17 @@ void Grid::init(int m, int n)
 
 int Grid::getM()
 {
-	return this->m;
+	return m;
 }
 
 int Grid::getN()
 {
-	return this->n;
+	return n;
 }
 
 std::vector<std::vector<Real>> Grid::getGrid()
 {
-	return this->grid;
+	return grid;
 }
 
 Real Grid::read(int x, int y)
@@ -53,6 +54,9 @@ DiffusionSimulator::DiffusionSimulator()
 	m_vfMovableObjectFinalPos = Vec3();
 	m_vfRotate = Vec3();
 	// to be implemented
+	T = new Grid();
+	T->init(16, 16);
+	alpha = 1;
 }
 
 const char * DiffusionSimulator::getTestCasesStr(){
