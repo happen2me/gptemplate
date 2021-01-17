@@ -220,7 +220,7 @@ void DiffusionSimulator::drawObjects()
 	for (int i = 0; i < m; i++) {
 		for (int j = 0; j < n; j++) {
 			Real t = T->read(i, j);
-			DUC->setUpLighting(Vec3(0, 0, 0), 0.4 * Vec3(1, 1, 1), 100., Vec3(t, 0.5, t));
+			DUC->setUpLighting(Vec3(0, 0, 0), 0.4 * Vec3(1, 1, 1), 100., Vec3(t, 0, 1-t));
 			DUC->drawSphere(Vec3(i, j, 0), Vec3(1, 1, 1));
 		}
 	}
