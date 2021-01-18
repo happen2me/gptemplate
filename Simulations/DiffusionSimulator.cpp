@@ -57,6 +57,12 @@ void Grid::write(int x, int y, Real val)
 	grid[x][y] = val;
 }
 
+void Grid::resize(int m, int n)
+{
+	init(m, n);
+	fillRand();
+}
+
 
 DiffusionSimulator::DiffusionSimulator()
 {
@@ -219,6 +225,10 @@ void DiffusionSimulator::diffuseTemperatureImplicit(float timeStep) {//add your 
 void DiffusionSimulator::onGridSizeChange(int m, int n)
 {
 	// TODO: implement this
+	if (m != T->getM() || n != T->getN())
+	{
+		T->resize(m, n);
+	}
 }
 
 
